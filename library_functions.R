@@ -14,6 +14,7 @@ generateCrossing <- function(sampledim, scale) {
               floor(0.45 * sampledim[3]) : floor(0.55 * sampledim[3])] <- scale
   return(mu.crossing)  
 }
+
 generateSquare <- function(sampledim, scale, constant = FALSE) {
   dim.row <- sampledim[2]
   dim.col <- sampledim[3]
@@ -32,27 +33,7 @@ generateSquare <- function(sampledim, scale, constant = FALSE) {
   }
   return(mu.square)  
 }
-generateSeparatedSquare <- function(sampledim, scale) {
-  dim.row <- sampledim[2]
-  dim.col <- sampledim[3]
-  mu.square <- matrix(0, sampledim[2], sampledim[3])
-  mu.square[floor(0.15 * sampledim[2]) : floor(0.85 * sampledim[2]), 
-            floor(0.15 * sampledim[3]) : floor(0.45 * sampledim[3])] <- scale
-  mu.square[floor(0.15 * sampledim[2]) : floor(0.85 * sampledim[2]), 
-            floor(0.55 * sampledim[3]) : floor(0.85 * sampledim[3])] <- scale
-  return(mu.square)  
-}
-generateTriangle <- function(sampledim, scale) {
-  dim.row <- sampledim[2]
-  dim.col <- sampledim[3]
-  mu.triangle <- matrix(0, sampledim[2], sampledim[3])
-  j <- floor(sampledim[3] * 0.35)
-  for (i in 0:floor(sampledim[2]/2)) {
-    mu.triangle[j, (floor(sampledim[2]/2) - i):(floor(sampledim[2]/2)+i)] <- scale + i
-    j <- j + 1
-  }
-  return(mu.triangle)  
-}
+
 generateNormalparam <- function(cluster.nums, sampledim) {
   mus <- array(0, dim = c(cluster.nums, sampledim[2:3]))
   rowcovs <- array(0, dim = c(cluster.nums, sampledim[2], sampledim[2]))
@@ -66,6 +47,7 @@ generateNormalparam <- function(cluster.nums, sampledim) {
   }
   return(list(mus = mus, rowcovs = rowcovs, colcovs = colcovs))
 }
+
 generateMixMatrixnormal <- function(dim) {
   signals <- array(0, dim = dim$sampledim)
   result.indicate <- c()
@@ -79,6 +61,7 @@ generateMixMatrixnormal <- function(dim) {
   }
   return(list(signals = signals, indicate = result.indicate))
 }
+
 generateParamsSim <- function(cluster.nums, sampledim, scale, diag = FALSE) {
   # generate mus
   mus <- array(0, c(cluster.nums, sampledim[2], sampledim[3]))
@@ -97,6 +80,7 @@ generateParamsSim <- function(cluster.nums, sampledim, scale, diag = FALSE) {
   normal.params <- list(mus = mus, rowcovs = rowcovs, colcovs = colcovs)
   return(normal.params)
 }
+                        
 likelihood <- function(obs, mu, rowcov, colcov, log = TRUE, tol = 1e-4) {
   while (kappa(rowcov) > 1e14) {
     rowcov <- rowcov + diag(tol, nrow(rowcov))
@@ -114,6 +98,7 @@ likelihood <- function(obs, mu, rowcov, colcov, log = TRUE, tol = 1e-4) {
     return(exp(log.like))
   }
 }
+                        
 expectationStep <- function(obses, mus, rowcovs, colcovs, pis, scale = TRUE) {
   dim.row <- length(pis)
   dim.col <- dim(obses)[1]
@@ -133,30 +118,23 @@ expectationStep <- function(obses, mus, rowcovs, colcovs, pis, scale = TRUE) {
   gamma.matrix <- pitimesfij / matrix(colsum.vec, nrow = dim.row, ncol = dim.col, byrow = TRUE)
   return(gamma.matrix)
 }
+                        
 maximizationStep <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda, penalty) {
   # update mus, rowcovs and colcovs
   if (penalty == 'lasso') {
-    new.mus <- updateMusLassoexact(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda)
-    #    new.mus <- updateMusexact(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda)
-    #    new.mus <- updateMus(obses, gamma.matrix, mus, rowcovs, colcovs, pis, step.size = 0.4, lambda)
+    new.mus <- updateMusLassoexact(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda)0.4, lambda)
   } else if (penalty == 'l2') {
     new.mus <- updateMusl2exact(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda)
-    #    new.mus <- updateMusl2(obses, gamma.matrix, mus, rowcovs, colcovs, pis, step.size = 0.4, lambda)
   } else {
     new.mus <- updateMusnuclearexact(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda)
-    # new.mus <- updateMusnuclear(obses, gamma.matrix, mus, rowcovs, colcovs, pis, step.size = 0.4, lambda)
   }
-  #    updated.rowandcol <- updaterowAndcolcovs(obses, gamma.matrix, new.mus)
   updated.rowandcol <- updaterowAndcolcovsTraceConstrain(obses, gamma.matrix, new.mus)
   new.rowcovs <- updated.rowandcol$rowcovs
   new.colcovs <- updated.rowandcol$colcovs
-  # new.rowcovs <- rowcovs
-  # new.colcovs <- colcovs
-  #new.rowcovs <- updaterowcovs(obses, gamma.matrix, mus, colcovs)
-  #new.colcovs <- updatecolcovs(obses, gamma.matrix, mus, rowcovs)
   new.pis <- rowSums(gamma.matrix) / sum(rowSums(gamma.matrix))
   return(list(mus = new.mus, rowcovs = new.rowcovs, colcovs = new.colcovs, pis = new.pis))
 }
+                        
 updaterowAndcolcovs <- function(obses, gamma.matrix, mus, tol = 1e-4, max.iter.loop = 10) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -167,9 +145,6 @@ updaterowAndcolcovs <- function(obses, gamma.matrix, mus, tol = 1e-4, max.iter.l
   for (i in 1:dim.cluster) {
     mu <- mus[i, , ]
     old.colcov <- diag(1, dim.colcov) 
-    # old.rowcov <- initializeUpdatedEM(obses, gamma.matrix[i, ], mu, solve(old.colcov + diag(tol, nrow(old.colcov))))
-    # new.colcov <- initializeUpdatedEM(obses, gamma.matrix[i, ], mu, solve(old.rowcov + diag(tol, nrow(old.rowcov))), FALSE)
-    # new.rowcov <- initializeUpdatedEM(obses, gamma.matrix[i, ], mu, solve(new.colcov + diag(tol, nrow(new.colcov))))
     old.rowcov <- initializeUpdatedEM(obses, gamma.matrix[i, ], mu, solve(old.colcov))
     while (kappa(old.rowcov) > 1e14) {
       old.rowcov <- old.rowcov + diag(tol, nrow(old.rowcov))
@@ -203,14 +178,6 @@ updaterowAndcolcovs <- function(obses, gamma.matrix, mus, tol = 1e-4, max.iter.l
       }
       tol <- 1e-4
       new.rowcov <- initializeUpdatedEM(obses, gamma.matrix[i, ], mu, solve(new.colcov))
-      # new.colcov <- initializeUpdatedEM(obses, gamma.matrix[i, ], mu, solve(old.rowcov + diag(tol, nrow(old.rowcov))), FALSE)
-      # new.rowcov <- initializeUpdatedEM(obses, gamma.matrix[i, ], mu, solve(new.colcov+ diag(tol, nrow(new.colcov))))
-      #     print (sum((old.colcov - new.colcov)^2))
-      #     print (sum((old.rowcov - new.rowcov)^2))
-      # if (sum((old.colcov - new.colcov)^2) > tol |
-      #     sum((old.rowcov - new.rowcov)^2) > tol) {
-      #   break
-      # }
       if (sum((kronecker(old.colcov, old.rowcov) - kronecker(new.colcov,
                                                              new.rowcov))^2) < tol)
         break
@@ -220,6 +187,7 @@ updaterowAndcolcovs <- function(obses, gamma.matrix, mus, tol = 1e-4, max.iter.l
   }
   return(list(rowcovs = rowcovs, colcovs = colcovs))
 }
+                        
 addDiag <- function(data.matrix, tol) {
   if (kappa(data.matrix) <= 1e14) {
     return(data.matrix)
@@ -231,6 +199,7 @@ addDiag <- function(data.matrix, tol) {
     return(data.matrix)
   }
 }
+                        
 updaterowAndcolcovsTraceConstrain <- function(obses, gamma.matrix, mus, tol = 1e-4, max.iter.loop = 10) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -267,6 +236,7 @@ updaterowAndcolcovsTraceConstrain <- function(obses, gamma.matrix, mus, tol = 1e
   }
   return(list(rowcovs = rowcovs, colcovs = colcovs))
 }
+                        
 updaterowcovs <- function(obses, gamma.matrix, mus, colcovs) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -283,6 +253,7 @@ updaterowcovs <- function(obses, gamma.matrix, mus, colcovs) {
   }
   return(updated.rowcovs)
 }
+                        
 updatecolcovs <- function(obses, gamma.matrix, mus, rowcovs) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -299,6 +270,7 @@ updatecolcovs <- function(obses, gamma.matrix, mus, rowcovs) {
   }
   return(updated.colcovs)
 }
+                        
 updateMus <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, step.size = 0.4, lambda) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -322,6 +294,7 @@ updateMus <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, step.size
   }
   return(updated.mus)
 }
+                        
 updateMusexact <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -340,6 +313,7 @@ updateMusexact <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lamb
   }
   return(updated.mus)
 }
+                        
 updateMusLassoexact <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -359,6 +333,7 @@ updateMusLassoexact <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis,
   }
   return(updated.mus)
 }
+                        
 updateMusl2exact <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -377,6 +352,7 @@ updateMusl2exact <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, la
   }
   return(updated.mus)
 }
+                        
 updateMusl2 <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, step.size = 0.4, lambda) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -400,6 +376,7 @@ updateMusl2 <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, step.si
   }
   return(updated.mus)
 }
+                        
 updateMusnuclear <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, step.size = 0.4, lambda) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -424,6 +401,7 @@ updateMusnuclear <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, st
   }
   return(updated.mus)
 }
+                        
 updateMusnuclearexact <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pis, lambda) {
   dim.cluster <- dim(mus)[1]
   dim.sample <- dim(obses)[1]
@@ -443,6 +421,7 @@ updateMusnuclearexact <- function(obses, gamma.matrix, mus, rowcovs, colcovs, pi
   }
   return(updated.mus)
 }
+                        
 initializeEM <- function(obses, cluster.nums, shuffle = FALSE, diag = TRUE) {
   obses.vec <- t(apply(obses, 1, as.vector))
   kmean.result <- kmeans(scale(obses.vec), cluster.nums)
@@ -471,6 +450,7 @@ initializeEM <- function(obses, cluster.nums, shuffle = FALSE, diag = TRUE) {
   pis <- table(kmean.result$cluster) / dim(obses)[1]
   return (list(pis = pis, mus = mus, rowcovs = rowcovs, colcovs = colcovs, result = kmean.result$cluster))
 }
+                        
 initializeMLEcovariance <- function(obs, mu, tol = 1e-4) {
   old.colcov <- diag(1, dim(obs)[3]) 
   old.rowcov <- initializeUpdated(obs, mu, solve(old.colcov))
@@ -485,6 +465,7 @@ initializeMLEcovariance <- function(obs, mu, tol = 1e-4) {
   }
   return (list(colcov = new.colcov, rowcov = new.rowcov))
 }
+                        
 initializeUpdated <- function(obs, mu, inv.matrix, rowcov = TRUE) {
   if (rowcov == TRUE) {
     updated.rowcovs <- matrix(0, dim(obs)[2], dim(obs)[2])
@@ -502,6 +483,7 @@ initializeUpdated <- function(obs, mu, inv.matrix, rowcov = TRUE) {
     return(updated.colcovs / (dim(obs)[1] * nrow(inv.matrix)))
   }
 }
+                        
 initializeUpdatedEM <- function(obs, gamma.vector, mu, inv.matrix, rowcov = TRUE) {
   if (rowcov == TRUE) {
     updated.rowcovs <- matrix(0, dim(obs)[2], dim(obs)[2])
@@ -519,6 +501,7 @@ initializeUpdatedEM <- function(obs, gamma.vector, mu, inv.matrix, rowcov = TRUE
     return(updated.colcovs / (sum(gamma.vector) * nrow(inv.matrix)))
   }
 }
+                        
 penalizedQ <- function(obses, mus, rowcovs, colcovs, pis, gamma.matrix, lambda) {
   updated.loggamma <- expectationStep(obses, mus, rowcovs, colcovs, pis, scale = FALSE)
   first.Q <- sum(gamma.matrix * updated.loggamma)
@@ -526,6 +509,7 @@ penalizedQ <- function(obses, mus, rowcovs, colcovs, pis, gamma.matrix, lambda) 
   penalized.Q <- first.Q - second.Q
   return(penalized.Q)
 }
+                        
 penalizedQl2 <- function(obses, mus, rowcovs, colcovs, pis, gamma.matrix, lambda) {
   updated.loggamma <- expectationStep(obses, mus, rowcovs, colcovs, pis, scale = FALSE)
   first.Q <- sum(gamma.matrix * updated.loggamma)
@@ -533,6 +517,7 @@ penalizedQl2 <- function(obses, mus, rowcovs, colcovs, pis, gamma.matrix, lambda
   penalized.Q <- first.Q - second.Q
   return(penalized.Q)
 }
+                        
 penalizedQnuclear <- function(obses, mus, rowcovs, colcovs, pis, gamma.matrix, lambda) {
   updated.loggamma <- expectationStep(obses, mus, rowcovs, colcovs, pis, scale = FALSE)
   first.Q <- sum(gamma.matrix * updated.loggamma)
@@ -540,6 +525,7 @@ penalizedQnuclear <- function(obses, mus, rowcovs, colcovs, pis, gamma.matrix, l
   penalized.Q <- first.Q - second.Q
   return(penalized.Q)
 }
+                        
 penalizedLikelihoodobs <- function(obses, mus, rowcovs, colcovs, pis, lambda, penalty, single.cluster = FALSE) {
   if (single.cluster == TRUE) {
     first.L <- 0 
@@ -568,6 +554,7 @@ penalizedLikelihoodobs <- function(obses, mus, rowcovs, colcovs, pis, lambda, pe
   penalized.L <- first.L - second.L
   return(penalized.L)
 }
+                        
 mainEM <- function(obses, lambda, cluster.nums, max.iter, penalty = 'lasso', tol = 1e-4, shuffle.ini = TRUE) {
   loss <- c()
   loss <- c(loss, -999)
@@ -617,6 +604,7 @@ mainEM <- function(obses, lambda, cluster.nums, max.iter, penalty = 'lasso', tol
                      initial.result = initial.result), 
               kmeans = initial.resultkmean))
 }
+                        
 CalculateCVL <- function(obses, lambda, cluster.nums, max.iter, 
                          penalty = 'lasso', tol = 1e-4, num.fold = 10) {
   CV.likelihood <- c()
@@ -640,24 +628,3 @@ CalculateCVL <- function(obses, lambda, cluster.nums, max.iter,
   }
   return(mean(CV.likelihood[CV.likelihood > 0]))
 }
-
-
-
-cluster.nums <- 2
-sampledim <- c(20, 10, 10)
-normal.params <- generateParamsSim(cluster.nums, sampledim, scale = 1, diag = FALSE)
-dim <- list(pi = rep(1, cluster.nums) / sum(rep(1, cluster.nums)), sampledim = sampledim, normal.params = normal.params)
-lambda <- 1.5/(cluster.nums * sampledim[2])
-penalty = 'lasso'
-
-generate.signals <- generateMixMatrixnormal(dim)
-signals <- generate.signals$signals
-result <- mainEM(signals, max.iter = 10, cluster.nums = cluster.nums, lambda = lambda, penalty = penalty)
-CV.likehood <- CalculateCVL(signals, lambda, cluster.nums, max.iter = 10, 
-                            penalty = penalty, tol = 1e-4, num.fold = 3)
-
-
-
-
-
-
