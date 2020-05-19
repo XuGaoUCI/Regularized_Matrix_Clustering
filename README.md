@@ -11,6 +11,7 @@ This repository is to implement the regularized mixture matrix clustering method
 
 ```cluster.nums <- 2
 sampledim <- c(20, 10, 10)
+cluster.nums <- 2
 normal.params <- generateParamsSim(cluster.nums, sampledim, scale = 1, diag = FALSE)
 dim <- list(pi = rep(1, cluster.nums) / sum(rep(1, cluster.nums)), sampledim = sampledim, normal.params = normal.params)
 generate.signals <- generateMixMatrixnormal(dim)
