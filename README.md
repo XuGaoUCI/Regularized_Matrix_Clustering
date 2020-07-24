@@ -31,3 +31,6 @@ result <- mainEM(signals, max.iter = 10, cluster.nums = cluster.nums, lambda = l
 ```
 CV.likehood <- CalculateCVL(signals, lambda, cluster.nums, max.iter = 10, penalty = penalty, tol = 1e-4, num.fold = 3)
 ```
+## Real Data Access
+1. For Rat Stroke Experiment, source data is available from [here](https://drive.google.com/drive/u/1/folders/1coYfDCnKL04ah2e89MkibK8bOR74iv1s).
+2. For Odor Memory Experiment, source data is available from [here](https://drive.google.com/drive/u/1/folders/1xEznXAZ9-eGUNX4XpKrZx0DrKWC-oohi).
