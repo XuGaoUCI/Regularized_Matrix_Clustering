@@ -11,7 +11,6 @@ generateTimefrequence <- function(array.data, resolution, band.width,
     for (chan in 1:sample.size[2]) {
         tf.array[chan, tri, , ] <- generateSingleperiodogram(index.matrix, array.data[, chan, tri] / sd(array.data[, chan, tri]), name.bands, freq.list)
         extreme.matrix[tri, chan] <- min(tf.array[chan, tri, , ])
-        # tf.array[chan, tri, , ] <- generateSingleperiodogram(index.matrix, array.data[, chan, tri], name.bands, freq.list)
     }
   }
   return(tf.array)
